@@ -1,0 +1,617 @@
+---
+title: ''
+author: ''
+output:
+  html_document:
+    df_print: paged
+  pdf_document:
+    number_sections: no
+    toc: no
+  word_document:
+    toc: no
+params: 
+  title: Country Development Report
+  student: Mulisa Kevine Umwiza
+  matriculation: 32564
+  date: "`r Sys.Date()`"
+geometry: left = 2.5cm, right = 2cm, top = 2cm, bottom = 2cm
+fontsize: 11pt
+header-includes:
+- \usepackage{float}
+- \usepackage{sectsty}
+- \usepackage{paralist}
+- \usepackage{setspace}\spacing{1.5}
+- \usepackage{fancyhdr}
+- \usepackage{lastpage}
+- \usepackage{dcolumn}
+- \usepackage{natbib}\bibliographystyle{agsm}
+- \usepackage[nottoc, numbib]{tocbibind}
+---
+
+```{r preliminaries, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(tinytex.verbose = TRUE)
+ScieboPath <- function(NameofDataset) paste0("https://hochschule-rhein-waal.sciebo.de/s/nMlsNE8yiX8vY4x/download?path=%2F&files=",NameofDataset)
+library(readstata13)
+source(ScieboPath("Ass1_prelims.R"))
+MyRESULTS <- list()
+```
+
+\allsectionsfont{\centering}
+\subsectionfont{\raggedright}
+\subsubsectionfont{\raggedright}
+
+\pagenumbering{gobble}
+
+\begin{centering}
+
+\vspace{1cm}
+
+\Large
+{\bf HOCHSCHULE RHEIN-WAAL}
+
+\Large
+{\bf RHINE-WAAL UNIVERSITY OF APPLIED SCIENCES}
+
+\Large
+{\bf FACULTY OF SOCIETY AND ECONOMICS}
+
+\vspace{5cm}
+
+\Large
+
+\doublespacing
+{\bf COUNTRY DEVELOPMENT REPORT \\ of `r paste0(MyCountries$country)`}
+
+\vspace{1 cm}
+
+\doublespacing
+{\bf M-SD 2 7105 Quantitative Research Methods}
+
+\vspace{5 cm}
+
+\singlespacing
+By
+
+\vspace{0.5 cm}
+
+\Large
+
+{\bf `r params$student`\\ `r params$matriculation`}
+
+\vspace{1 cm}
+
+\normalsize
+Date:
+`r Sys.Date()`
+
+\end{centering}
+\pagebreak
+
+```{r cover-page, eval=knitr::is_html_output(), echo=FALSE, results='asis'}
+cat("<p align=center style=\"text-align:center\"><b><span lang=EN-US style=\"line-height:150%;color:black\">HOCHSCHULE RHEIN-WAAL<br>RHINE-WAAL UNIVERSITY OF APPLIED SCIENCES<br>FACULTY OF SOCIETY AND ECONOMICS<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>COUNTRY DEVELOPMENT REPORT<br>of ")
+cat(paste0(MyCountries$country,sep=", "))
+cat("<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>M-SD_1 7105: Quantitative Research Methods<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>By<br>")
+cat(paste0(params$student,"<br>",params$matriculation))
+cat("<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>Date:<br>")
+cat(format(Sys.Date(),"%d.%m.%Y"))
+cat("</span></b></p><hr><p><br></p>")
+```
+
+<!--
+
+INSTRUCTIONS:
+=============
+
+Do not edit anything ABOVE this comment, besides: 
+  - your NAME (in line no. 12) 
+  - and your MATRICULATION No. (in line no. 13) !!!
+
+When you manually execute this Rmd-File until this comment, you´ll find the following data-objects in the global environment:
+ - MyCountries: a dataframe of 3 countrynames that you should use, 
+   incl. countryname, iso2-code, iso3-code. You can use the 'iso2c'-variable to retrieve data from WDI.
+ - MyRESULTS: a (currently empty) list where you should assign the required reuslts to.
+ - params: a list including your personal and report information (name, matr. no., etc.) - not of interest here.
+  
+Below these lines you find the problem sets with questions, further instructions and (mostly) empty code-chunks.
+Please leave the questions/instruction unaltered and start filling in the code chunks below in response to the questions / instructions. 
+Continue by writing answers to the questions and your interpretations of the results below each code chunk.
+Save all required results in the MyRESULTS-list, e.g. by entering:
+
+  MyRESULTS$P1a <- "the result of problem 1a)"
+  MyRESULTS$M5 <- "the regression results of model no. 5"
+  
+Thus, add the "P" for Problem, "1" for problem no. 1, and "a" for sub-problem a) and assign "<-" the resulting lists(test outputs etc.), scalars, vectors, or dataframes. 
+Add "M" before the model no. to save the regression results from the respective model. 
+  
+
+SUBMISSION:
+===========
+In order to pass, it is mandatory to submit the resulting .Rmd and(!) .RData filesby the deadline via Moodle!
+However, you should have checked before that everything works correctly. 
+For the sake of documentation, you should 'knit' your .Rmd - file into multiple formats, e.g. PDF (if LaTex works on your computer), HTML (should work), Word-Doc (if you like) and submit these files additionally on Moodle.
+The last code-chunk saves your MyRESULTS-list in the "MyResults_[matr.no].RData"-file that needs to be submitted as well.
+
+We wish you every success!
+\
+-->
+
+
+# Country Development Report of: `r paste0(MyCountries$country)`
+
+# 1. Introduction
+Obtain the data for all, in later problems required, variables for your three selected countries for the years 1980-2020 from the World Development Indicators-Database of the World Bank.
+```{r set-indicators}
+MyIndicators <- c ("NY.GDP.MKTP.KD.ZG","SP.POP.TOTL","BX.KLT.DINV.CD.WD", "NE.TRD.GNFS.ZS",
+                  "DT.ODA.ALLD.CD","FP.CPI.TOTL.ZG","SE.XPD.TOTL.GB.ZS","LP.LPI.INFR.XQ",
+                  "SH.XPD.GHED.GD.ZS" )  # <-- add all required indicators here!
+
+??WDI
+population <- WDIsearch("population")
+FDI<- WDIsearch("FDI")
+Trade<- WDIsearch("Trade")
+ODA<- WDIsearch("ODA")
+Inflation<- WDIsearch("Inflation")
+Education<- WDIsearch("education")
+Infrastructure<- WDIsearch("Infrastructure")
+Health<- WDIsearch("Health expenditure")
+```
+As you will find missings (N/As) in your data, we impose spline interpolation per country and variable for obtaining a full dataset.
+```{r get-data, message=TRUE, warning=TRUE, include=FALSE}
+# no need to change anything here!
+library(WDI)
+WDIorig <- WDI(country = MyCountries$iso2c, indicator = MyIndicators, start = 1980, end = 2020, extra = FALSE)
+library(dplyr)
+library(tidyr)
+library(imputeTS)
+WDIfull <- WDIorig %>% pivot_longer(MyIndicators) %>%
+  group_by(country,iso2c,iso3c,name) %>% 
+  mutate(value = na_interpolation(value, option = "spline")) %>%
+  pivot_wider(names_from=name,values_from=value)
+```
+
+a) Describe the obtained dataset by tables of summary statistics for each country separately, including the mean, quartiles and standard deviation of all variables required below for the given/available timeframe for all countries separately. 
+
+##Renamed the indicators
+```{r tab-summary-statistics}
+
+WDIfull_renamed <- WDIfull %>% 
+  rename(GDP = NY.GDP.MKTP.KD.ZG,
+         Population = SP.POP.TOTL,
+         FDI = BX.KLT.DINV.CD.WD,
+         Trade = NE.TRD.GNFS.ZS,
+         ODA = DT.ODA.ALLD.CD,
+         Inflation = FP.CPI.TOTL.ZG,
+         Education = SE.XPD.TOTL.GB.ZS,
+         Infrastructure = LP.LPI.INFR.XQ,
+         Health = SH.XPD.GHED.GD.ZS)
+options(scipen = 999)
+```
+
+##Grouped and summarized data
+```{r}
+library("stargazer")
+
+WDISG <- WDIfull_renamed %>%
+  filter(iso2c == "SG")
+WDISG <- as.data.frame(WDISG)
+stargazer(WDISG, type = "text", iqr = T, title = "Descriptive statistics Singapore")
+
+WDISI <- WDIfull_renamed %>%
+  filter(iso2c == "SI")
+WDISI <- as.data.frame(WDISI)
+stargazer(WDISI, type = "text", iqr = T, title = "Descriptive statistics Slovenia")
+
+WDISA <- WDIfull_renamed %>%
+  filter(iso2c == "SA")
+WDISA <- as.data.frame(WDISA)
+stargazer(WDISA, type = "text", iqr = T, title = "Descriptive statistics Saudi Arabia")
+
+
+```
+
+b) Calculate the GDP per capita (PPP) for all three countries and show its development from 1980 - 2020 in a single graph.
+
+##Calculated GDP per capita
+```{r}
+data <- WDIfull_renamed
+filtered_data <- data %>%
+  filter(country %in% c("Singapore", "Slovenia", "Saudi Arabia"),
+         year >= 1980 & year <= 2020) %>%
+  mutate(GDP_per_Capita = GDP / Population)
+```
+
+
+```{r fig-gdppcppp}
+library(ggplot2)
+
+ggplot(filtered_data, aes(x = year, y = GDP_per_Capita, color = country))+
+  geom_line()
+```
+
+# 2. Determinants of Economic Development
+From the literature we know that economic growth of a country is correlated with size of the labour force, investment, and involvement of the country in international trade. Moreover, it is often disputed that development aid makes a significant contribution. Thus, as model no. 1 (M1) run a pooled multiple linear regression (OLS) on the following equation:
+$$(M1) \ \ \  GDP =  \alpha + \beta_1 Population + \beta_2 FDI + \beta_3 Trade + \beta_4 ODA + \beta_5 Inflation +  \varepsilon $$
+Find suitable variables that describe GDP, Population size, FDI (=Foreign Direct Investment), Trade (e.g. the degree of openness), ODA (Official Development Assistance).
+(M2) As model no. 2 estimate a log-linear version of M1. 
+(M3) And a a log-log version of M1.
+
+a) Present your regression results for all 3 models in a single table. Discuss which measure you would consult in order to find the model with the "best fit". Explain what is meant by "best fit".
+```{r warning=FALSE} 
+library(stargazer)
+M1<- lm (GDP ~ Population + FDI + ODA + Trade + Inflation, data = filtered_data)
+M2 <- lm (log(GDP) ~ Population + FDI + ODA + Trade + Inflation, data = filtered_data)
+M3 <- lm (log(GDP) ~ log(Population) + log(FDI) + log (ODA) + log(Trade), data = filtered_data)
+stargazer(M1, M2, M3, type = "text")
+```
+
+__< R-squared and/or Adjusted R-squared can be used to find the model with the best fit. R-squared calculates the percentage of the dependent variable's variance that can be explained by the independent variables in the regression model. When comparing models with different numbers of independent variables, it is best to use adjusted R-squared, which takes into account the number of independent variables in the model by penalizing the addition of extra independent variables that do not significantly contribute to explaining the variation in the dependent variable(Montgomery et al., 2013). Since our models have the same number of independent variables, we will use R-squared to measure the goodness of fit. The better the model is in describing the variation in the dependent variable explained by the independent variable, the higher the value for R-squared (Hill et al., 2018).
+
+M1 has r-squared value of 0.132 which means that the model explains 13.2% of the variation in the GDP caused by the independent variables which are Population, Trade, FDI, ODA, and Inflation. M2 has r-squared value of 0.099 which means that the model explains 9.9% of the variation in the log(GDP) caused by the independent variables which are Population, Trade, FDI, ODA, and Inflation. M3 has r-squared value of 0.107 which means that the model explains 10.7% of the variation in the GDP caused by the independent variables which are Population, Trade, FDI, ODA, and Inflation.
+
+Comparing the r-squared values, we can conclude that M1 is the best fit because its R-squared value is the highest among other models which means that the model explains the higher variation in the GDP using the independent variables. However, it is important to mention that the R-squared values in the three models are noticeably low. This indicates that the independent variables used in the models only account for a small portion of the variation in the GDP or log(GDP). As a result, it raises the possibility that other variables or factors, not taken into account by the model, also contribute to the observed variation in the GDP or log(GDP). 
+
+'best fit' means finding a model that has minimal residuals meaning that the difference between observed values and predicted values should be small. Additionally, a best fit model is a model whose coefficients have statistical significance to indicate the effect they have on the dependent variable (Soetewey, 2021).>__
+
+
+b) Calculate 95%-confidence intervals for all coefficients of model M2. (Save the results in 'MyRESULTS$P1b'.) Interpret the coefficents with respect to their effects (size, sign and significance) on the dependent variable.
+```{r}
+confint_M2 <- confint(M2, level = 0.95)
+stargazer(confint_M2, type = "text")
+MyRESULTS$P1b <- confint_M2
+```
+
+__< Confidence interval estimation is a technique used in data analysis to estimate the values of regression results with uncertainty measure caused by sampling variability and it gives a range in which we can be confident to approve our assumptions (Hill et al., 2018). 
+
+
+Population: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation. However, if it were to be significant, the following would be the interpretation. The increase of total population by 1 unit would lead to the increase of log(annual GDP growth) by `r confint_M2[2,1]` and `r confint_M2[2,2]` holding other variables constant. The coefficient of Population at 2.5% confidence level is negative indicating that as population increases log(annual GDP growth) decreases but at the 97.5% confidence level the coefficient becomes positive which indicates that the increase in population leads to the increase of log(annual GDP growth).
+
+FDI: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation. However, if it were to be significant, the following would be the interpretation.The increase of FDI by 1 USD would lead to the increase of log(annual GDP growth) by `r confint_M2[3,1]` and `r confint_M2[3,2]` holding other variables constant. The coefficient of FDI at 2.5% confidence level is negative indicating that as FDI increases log(annual GDP growth) decreases but at the 97.5% confidence level the coefficient becomes positive which indicates that the increase in FDI leads to the increase of log(annual GDP growth). 
+
+ODA: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation. However, if it were to be significant, the following would be the interpretation. The increase of ODA by 1 USD would lead to the increase of log(annual GDP growth) by `r confint_M2[4,1]` and `r confint_M2[4,2]` holding other variables constant. The coefficient of ODA at 2.5% confidence level is negative indicating that as ODA increases log(annual GDP growth) decreases but at the 97.5% confidence level the coefficient becomes positive which indicates that the increase in ODA leads to the increase of log(annual GDP growth). 
+
+
+Trade: The coefficient for this variable is significant at 5% significance level, therefore the following interpretation is meaningful.The increase of Trade by 1 % would lead to the increase of log(annual GDP growth) by `r confint_M2[5,1]` and `r confint_M2[5,2]` holding other variables constant. The coefficients of Trade at 2.5% confidence level  and 97.5% confidence level are both positive which indicates that the increase in Trade leads to the increase of log(annual GDP growth). 
+
+Inflation: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation. However, if it were to be significant, the following would be the interpretation. The increase of Inflation by 1 % would lead to the increase of log(annual GDP growth) by `r confint_M2[6,1]` and `r confint_M2[6,2]` holding other variables constant. The coefficient of Inflation at 2.5% confidence level is negative indicating that as Inflation increases log(annual GDP growth) decreases but at the 97.5% confidence level the coefficient becomes positive which indicates that the increase in Inflation leads to the increase of log(annual GDP growth).>__
+
+c) Estimate a model no. 4 (M4) by taking the "best fitting" model from (a) and add the interaction 
+$\beta_6 FDI*Trade$. Present the results in a table below. Interpret the interaction coefficient $\beta_6$.
+```{r warning=FALSE}
+M4 <-  lm (GDP ~ Population + FDI + ODA + Trade + Inflation + I(FDI*Trade), data = filtered_data)
+summary(M4)
+```
+
+__< A combined effect of two or more independent variables on the dependent variable that differs from what would be anticipated based on their individual effects alone is referred to as an interaction. It means that the relationship between the independent variables and the dependent variable is not additive but is instead affected by how the variables interact (James, 2017). Interpreting the interaction between FDI and Trade (I(FDI*Trade)) will enable us to investigate how the interaction affects the relationship between the dependent - GDP and independent variables - Population, Trade, FDI, ODA, Inflation.
+
+According to the coefficient of I(FDI*Trade), we can say that if the interaction between FDI and Trade increases by 1 unit then the annual GDP growth will increase by `r M4$coefficients[7]` holding other variables constant. In order to determine if the coefficient is statistically significant we check the p-value. The P-value is 0.78865 which is higher than the significance level of 0.05, therefore we fail to reject the null hypothesis which states that "the interaction between FDI and Trade has no effect on GDP". Hence we can conclude by saying that the interaction between FDI and Trade have no significant effect on the annual GDP growth.>__
+ 
+
+d) Run a joint-hypothesis test on the null hypothesis that trade has no explanatory power for model M4. (Save the test result in 'MyRESULTS$P1d'). Explicitly formulate $H_0$ and $H_1$ and interpret the test result.
+```{r warning=FALSE}
+library(AER)
+
+Hnull <- c("Trade = 0")
+(jht <- linearHypothesis(M1, Hnull))
+
+Results <- c()
+summary(jht)
+MyRESULTS$P1d <- jht
+```
+
+__<A joint hypothesis-test examines the combined effect of many independent variables on the dependent variable in order to assess the significance of a model (Greene, 2012). The test contrasts the variance in the dependent variable when the relevant variables are present in the model (the "restricted" model) and when they are not (the "unrestricted" or full model). It analyzes if the extra variance that is explained by the variables is statistically significant.
+
+
+The null hypothesis for a joint hypothesis test is that all the coefficients associated with the variables under consideration are equal to zero simultaneously and the alternative hypothesis is that at least one of the coefficients is non-zero. In this context, we will be considering Trade only. Therefore, our null hypothesis states that "Trade has no explanatory power for model 4" and the alternative hypothesis states that "Trade has explanatory power for model 4". 
+
+H0 : Trade has no explanatory power for model 4
+H1 : Trade has explanatory power for model 4
+
+Significance level is 5% or 0.05. In order to reject or accept the null hypothesis, we consider the p-value. When the p-value is smaller than the significance level, we can reject the null hypothesis but when the p-value is greater/higher than the significance level, we fail to reject the null hypothesis. The F-statistic is 11.152 p-value of our test is 0.001126, which is smaller than 0.05. Therefore, we can reject the null hypothesis (H0) and conclude that 'Trade' has explanatory power for model 4. This means that 'Trade' provides valuable information for understanding and predicting the variation in GDP.>__
+
+
+e) Add country fixed-effects to M4 and estimate it as model no. 5 (M5). Explain how the Goodness-of-fit has changed. 
+```{r}
+M5 <- lm(GDP ~ Population+FDI+ODA+Inflation+Trade + as.factor(country), data = filtered_data)
+summary(M4)$r.squared
+summary(M5)$r.squared
+print(paste("R-squared for M4: ", summary(M4)$r.squared))
+print(paste("R-squared for M5: ", summary(M5)$r.squared))
+```
+
+__< As mentioned above in 2a, R-squared is used to measure the goodness of fit. If we observe the change in R-squared we can determine the change in the goodness of fit. The higher the value of R-squared, the better the Goodness-of-fit becomes (Hill et al., 2018). 
+
+R-squared value for M4 is 0.1327 which means that 13.27% of the variation in GDP is explained by Population, FDI, ODA, Trade, and Inflation in the three countries in my data set(Slovenia, Singapore, and Saudi Arabia). And the R-squared value for M5 is 0.1455 which which means that 14.55% of the variation in GDP is explained by Population, FDI, ODA, Trade, Inflation, plus country fixed effects such as policies and unique characteristics associated with each country in my data set. And it is important to note that the country fixed effects are specific and may be different for each country.
+
+We can observe that R-squared value has increased from 0.1327 to 0.1455 which means that M5 has a higher explanatory power of the variation in GDP. This change shows that including country fixed effects has improved the goodness of fit. >__
+
+
+f) Test M5 for heteroskedasticity and interpret the results. Explain $H_0$ and $H_1$. Save the test statistic as 'MyRESULTS$P2f'.
+```{r}
+bp_test <- bptest (M5)
+print(bp_test)
+MyRESULTS$P2f <- bp_test
+```
+
+__< Many tests can be used to examine the presence of heteroskedasticity in a regression model but I chose to use Breusch-Pagan test because it is simple and easy to understand. The Breusch-Pagan tests the explanatory power of the regression by regressing the squared residuals across all independent variable (Hill et al., 2018). The null hypothesis of the test states that "There is no heteroscedasticity in the regression model" which assumes that the variance of residuals is constant across different levels of the independent variables. The alternative hypothesis states that "There is heteroscedasticity in the regression model". 
+ 
+
+H0 : There is no heteroscedasticity in the regression model
+H1 : There is heteroscedasticity in the regression model
+
+Significance level is 5% or 0.05. In order to reject or accept the null hypothesis, we consider the p-value. When the p-value is smaller than the significance level, we can reject the null hypothesis but when the p-value is greater/higher than the significance level, we fail to reject the null hypothesis. The P-value is `r bp_test$p.value` which is less than the significance level, therefore we can reject the null hypothesis (homoscedastic). Hence, the residuals are not distributed with equal variance at each level of the independent variables indicating the presence of heteroskedasticity in M5.>__
+
+# 3. Determinants of Human Development
+In this problem, you will construct our own Human Development Index (HDI). In the WDI-Database find 1-2 indicators each that have meaningful explanatory power for:
+- Education, e.g. primary or secondary enrollment rates
+- Health, e.g. life expectancy or infant mortality rates
+- Infrastructure, e.g. basic or upgraded sanitation facilities, internet users
+Calculate an index (I) for each indicator with range 0-1 by dividing by their indicator maximum (over all 3 countries): 
+$$ Index = \frac{Indicator}{max(Indicator)} $$
+Define the HDI by the geometric mean of these three variables:
+$$ HDI = \sqrt[k]{I_{Education} * I_{Health} * I_{Infrastructure}} $$
+with $k$: number of actual (3-6) Indices included.
+
+For the following regression models, use HDI as dependent variable, and estimate linear-log models with the below mentioned explanatory variables.
+
+a) Estimate model no. 6 (M6) with GDP, FDI, Trade, and ODA as explanatory variables. Use a joint hypothesis test to detect whether all coefficients are zero. (Save the test-statistic as 'MyRESULTS$P3a'). Interpret the results.
+```{r}
+HDI=filtered_data$index_Education <- filtered_data$Education / max(filtered_data$Education, na.rm = TRUE)
+filtered_data$index_Health <- filtered_data$Health / max(filtered_data$Health, na.rm = TRUE)
+filtered_data$index_Infratructure <- filtered_data$Infrastructure / max(filtered_data$Infrastructure, na.rm = TRUE)
+
+k = rowSums(!is.na(filtered_data[,c("index_Education", "index_Health", "index_Infratructure")]))
+
+filtered_data$HDI = (filtered_data$index_Education * filtered_data$index_Health * filtered_data$index_Infratructure)^(1/k)
+```
+
+```{r warning=FALSE}
+library(stargazer)
+WDIfull_renamed$FDI <- ifelse(WDIfull_renamed$FDI < 0, 0, WDIfull_renamed$FDI)
+WDIfull_renamed$GDP <- ifelse(WDIfull_renamed$GDP < 0, 0, WDIfull_renamed$GDP)
+
+WDIfull_renamed$FDI <- WDIfull_renamed$FDI +1
+WDIfull_renamed$GDP <- WDIfull_renamed$GDP +1
+
+M6 <- lm(HDI ~ log(GDP) + log(FDI) + log(Trade) + log(ODA), data = WDIfull_renamed)
+
+stargazer (M6, type= "text")
+Hnull <- c("log(GDP) = 0", "log(Trade)=0", "log(ODA)=0", "log(FDI)=0")
+linearHypothesis(M6, Hnull)
+Results <- c()
+MyRESULTS$P3a <- M6
+
+options(scipen = 999)
+
+```
+
+
+__<A joint hypothesis-test examines the combined effect of many independent variables on the dependent variable in order to assess the significance of a model (Greene, 2012). The dependent variable in this context is HDI and the independent variables are GDP, FDI, ODA, and Trade. 
+
+The null hypothesis for a joint hypothesis test is that all the coefficients associated with the variables under consideration are equal to zero simultaneously and the alternative hypothesis is that at least one of the coefficients is non-zero.
+
+H0 : All coefficient in the model are equal to zero
+H1 : At least one coefficient in the model is not equal to zero
+
+Since the determinant factor in rejecting or failing to reject the null hypothesis is the p-value, we have to look at our P-value. The F-statistic is 16.285 and the p-value for our test is 0.0000000002223 which is smaller than 0.05 therefore we can reject the null hypothesis which means that we have enough evidence to conclude that any of the independent variables (GDP, FDI, ODA, and Trade) have a significant effect on the dependent variable (HDI). 
+
+This is correct because as we observe in our results,the coefficients for the variables of log(GDP) and log(Trade) are significant at a 5% significance level and log(ODA) is highly significant at 1% significance level. Therefore the interpretation of the coefficients is meaningful. 
+
+log(GDP) : The increase of GDP by 1 % would lead to the increase of HDI by `r M6$coefficients[2]` holding other variables constant. The effect of GDP on HDI is positive and statistically significant.
+
+log(Trade) :   The increase of Trade by 1 % would lead to the increase of HDI by `r M6$coefficients[4]` holding other variables constant. The effect of Trade on HDI is positive and statistically significant.
+
+log(ODA): The increase of ODA by 1 USD would lead to the increase of HDI by `r - M6$coefficients[5]`  holding other variables constant. The effect of ODA on HDI is negative and statistically significant.>__
+
+b) You want to find out, whether there is a minimum or maximum effect of Official Development Assistance (ODA) on Human Development. Find a suitable functional form and estimate it as model no. 7 (M7). Calculate the minimum/maximum (and save it in 'MyRESULTS$P3b'). Interpret your finding.
+```{r}
+M7 <- lm(HDI ~ GDP + FDI + Trade + ODA + I(ODA^2), data = filtered_data)
+summary(M7)
+MyRESULTS$P3b <- M7
+```
+
+__< By analyzing and interpreting the coefficients of ODA and I(ODA^2) we will be able to find the maximum and minimum effect of ODA on HDI. 
+
+If  ODA increases by 1 USD then the HDI will increase by `r M7$coefficients[5]` holding other variables constant. 
+The P-value is 0.162168 which is greater than the significance level of 0.05, therefore we fail to reject the null hypothesis which states that "the interaction effect of ODA has no effect on HDI". Hence we can conclude by saying that ODA has no significant effect on the HDI.
+
+If the interaction effect of ODA increases by 1 USD then the HDI will increase by `r M7$coefficients[6]` holding other variables constant.The P-value is 0.019434 which is smaller than the significance level of 0.05, therefore we can reject the null hypothesis which states that "the interaction effect of ODA has no effect on HDI". Hence we can conclude by saying that the interaction effect of ODA has a significant effect on the HDI. 
+
+Therefore we can conclude by saying that I(ODA^2) has a maximum effect on HDI because it is statistically significant and ODA has a minimum effect because its effect on HDI is not statistically significant.>__
+
+
+c) Carry out the Variance Inflation Factor (VIF) test on Model no. 7 (M7) to check for multicollinearity. Interpret if multicollinearity is an issue in the model.
+```{r}
+Vif1 <- vif(M7)
+Vif1
+
+```
+
+__< When one or more independent variables in a regression model have a strong correlation with one another, this is known as multi-collinearity. Due to the difficulty in analyzing and interpreting the impact of each independent variable on the dependent variable in the model, this can cause results to be misinterpreted. Hence, diminishing the statistical significance of the independent variable (Allen, 1997, pp.176-180) .
+
+Variance Inflation factor test for multicollinearity by quantifying the extent to which the variance of the estimated regression coefficient of an independent variable is inflated due to its correlation with other independent variables in the model. A high VIF proves the presence of multicollinearity. 
+
+In this model the VIFs are less than 5 (1-1.5) which means that all our varibales pass the multi-collinearity test implying that there is no correlation between a given independent variable and other independent variables in the model. Therefore, multi-collinearity is not a an issue in this model.>__
+
+
+d) By using Ramsey´s regression equation specification error (RESET) test, check to see if the functional form of M7 is adequate. Explain the test logic and interpret the result. (Save the test statistic as 'MyRESULTS$P3d'.)
+```{r}
+library(lmtest)
+rrt <- resettest(M7, power = 2:3, type = "fitted" )
+rrt
+MyRESULTS$P3d <- rrt
+```
+
+__< The RESET test determines whether the regression model appropriately represents the nonlinear relationship between the independent variables and the dependent variable in order to determine whether the functional forms are adequate (Wooldridge & Jeffrey, 2013). The null hypothesis of the reset test states that " the regression model has no ommitted variables and the functional form is adequate" and the alternative hypothesis states that " the regression model has ommitted variables and the functional form is not adequate". 
+
+H0: no omitted variables and the functional form is adequate.
+H1: ommitted varibales and the functional form is not adequate. 
+
+P-value is `r rrt$p.value` which is smaller than 0.05, therefore we can reject the null hypothesis. Hence, the functional form is inadequate which means that there are likely ommitted variables and specification errors that need to be addressed. >__
+
+
+e) Use the Jarque-Bera-Test to test for normality of the residuals. Save the test statistic as 'MyRESULTS$P3e'. Interpret all the results by explaining the test logic, including $H_0$ and $H_1$.
+```{r warning=FALSE}
+
+library(tseries)
+j.b.t <- jarque.bera.test(M7$residuals)
+MyRESULTS$P3e <- j.b.t
+```
+
+__< Jarque-Bera-Test test whether the residuals are normally distributed by examining for Kurtosis and skewness (Greene, 2012). The null hypothesis of the jarque-bera-test states that "Residuals are normally distributed" and the alternative hypothesis states that "Residuals are normally not distributed". 
+
+H0 :Residuals are normally distributed. 
+H1: Residuals are not normally distributed. 
+
+P-value is `r j.b.t$p.value` which is greater than the significance level 0.05, therefore we fail to reject the null hypothesis. Hence, the data is normally distributed as there is no significant departure from normality based on the test.>__
+ 
+
+# 4. Summary and Conclusion
+By including all explanatory variables used in models M1-M7, find the models with the largest explanatory power for:
+- economic development (M8)
+- human development (M9) 
+by selecting an appropriate functional form. In M8 exclude GDP on the right hand-side and include a polynomial of third order of FDI. In M9 include the polynomial of third order for GDP.
+
+a) Present the estimation results of both models in a single table. Summarize and compare the main results for both models, and interpret the effects of changes in the explanatory variables on the dependent variable, as well as the statistical significance of their coefficients.
+```{r warning=FALSE}
+library(stargazer)
+M8 <- lm(GDP ~ poly(FDI, 3) + Trade + Inflation + ODA+ Population + Education +Health + Infrastructure, data = filtered_data)
+M9 <- lm(HDI ~ poly(GDP, 3) + Trade + Inflation + ODA+ Population + Education +Health + Infrastructure, data = filtered_data)
+stargazer(M8, M9, type = "text")
+```
+
+__<your answer here!>__
+
+M8 used GDP as the dependent variable and M9 used HDI as the dependent variable.
+
+M8 interpretation :
+
+The "poly(FDI,3)1, poly(FDI,3)2, and poly(FDI,3)3 indicate the coefficient estimate of the first order, second order, and third order respectively of the polynomial of FDI in the GDP model. 
+
+poly(FDI, 3)1: if poly(FDI, 3)1 increases by 1 unit, then the GDP decreases by 11.495 holding other variables constant in the model. This indicates that the increase of FDI has a negative effect on the GDP because it leads to its decrease. The coefficient of poly(FDI, 3)1 is only significant at 10% significance level.
+
+poly(FDI, 3)2: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation. However, if it were to be significant, the following would be the interpretation. If poly(FDI, 3)2 increases by 1 unit, then the GDP increases by 3.014 holding other variables constant in the model. This indicates that the increase of FDI has a positive effect on the GDP because it leads to its increase.
+
+poly(FDI, 3)3: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation.
+
+Trade: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation. However, if it were to be significant, the following would be the interpretation. If Trade increases by 1% then the GDP will increase by 0.015 holding other variables constant.
+
+Inflation: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation.
+
+ODA: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation. 
+
+Population: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation.
+
+Education: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation.However, if it were to be significant, the following would be the interpretation. If total government expenditure spent on education increases by 1 USD then the GDP will increase by  0.149 holding other variables constant. 
+
+Health: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation.
+
+Infrastructure: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation.
+
+
+M9 interpretation:
+
+The "poly(GDP,3)1, poly(GDP,3)2, and poly(GDP,3)3 indicate the coefficient estimate of the first order, second order, and third order respectively of the polynomial of GDP in the HDI model. 
+
+poly(GDP, 3)1: if poly(GDP, 3)1 increases by 1 unit, then the HDI decreases by 0.042 holding other variables constant in the model. The effect of poly(GDP, 3)1 on HDI is negative and statistically significant at 5% significance level.
+
+poly(GDP, 3)2:The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation.
+
+poly(GDP, 3)3: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation.
+
+Trade: The effect of Trade on HDI is positive and statistically significant at 1% significance level(highly significant). If Trade increases by 1% then the HDI will decrease by `r - M9$coefficients[5]` holding other variables constant. 
+
+Inflation: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation.
+
+ODA: The coefficient for this variable is insignificant; therefore, there is no meaningful interpretation.
+
+Population: The effect of population on HDI is positive and statistically significant at 1% significance level(highly significant). If Population increases by 1 unit then the HDI will increases by `r M9$coefficients[8]` holding other variables constant. 
+
+Education: The effect of government expenditure spent on education on HDI is positive and statistically significant at 1% significance level(highly significant). If government expenditure spent on education increases by 1 USD then the HDI will increases by `r M9$coefficients[9]` holding other variables constant. 
+
+Health: The effect of government expenditure on Health on HDI is positive and statistically significant at 1% significance level(highly significant). If total government expenditure on Health increases by 1 USD then the HDI will increases by `r M9$coefficients[10]` holding other variables constant. 
+
+Infrastructure: The effect of infrastructure quality, Logistics Performance Index on HDI is positive and statistically significant at 1% significance level(highly significant). If infrastructure quality, Logistics Performance Index increases by 1 unit then the HDI will increases by `r M9$coefficients[11]` holding other variables constant. 
+
+Therefore we can conclude by saying that M9 has coefficients that are more statistically significant than M8 (only one coefficient was statistically significant). This means that the relationship between the independent variables and the dependent variable HDI is more statistically reliable and strong compared to the relationship between the independent variables and  dependent variable GDP. 
+
+b) Calculate the OLS residuals and report summary statistics (minimum, maximum, mean, median, variance) for both models. Explain in what ways these results support or violate the assumptions of the OLS-regression method.
+```{r}
+M8_residuals <- M8$residuals
+M9_residuals <- M9$residuals
+summary(M8_residuals)
+summary(M9_residuals)
+var(M8_residuals)
+var(M9_residuals)
+```
+
+__< The OLS (Ordinary Least squares) is a method used to determine the parameters of a regression model. The goal of the method is to minimize the sum of squared residuals from the linear equation. OLS has many assumptions and before we analyze how our results support or violate them, it is important to note which assumptions can be analyzed based on the results we have available and those are homoscedasticity and normality.Homoscedasticity assumes that the variance of residuals is constant across all levels of the independent variables and normality assumes that the residuals in a regression model follow a normal distribution and are distributed around zero (Hill et al., 2018) 
+
+The OLS residuals of M8 have a high variance which indicates that the residuals have a large amount of dispersion and can also indicate heteroscedasticity. This violates the assumption of Homoscedasticity of the OLS regression model. Additionally, the residuals are distributed around 0 because we can observe that the mean is close to zero supporting the OLS assumption of normality.  
+
+On the other hand, the OLS residuals of M9 have a low variance which indicates that the residuals have a small dispersion around the regression line which supports the OLS regression assumption of homescedasticity. The residuals of M9 also support the OLS assumption of normality because they are distributed around 0. We can conclude by saying that the OLS regression assumptions are partially supported and supported in both models as indicated above.>__
+ 
+
+c) Generate the Q-Q-plots for the residuals of both models. Explain the logic behind the plot and intrepret the results.
+```{r}
+M8_residuals <- residuals(M8)
+qqnorm(M8_residuals)
+qqline(M8_residuals)
+M9_residuals <- residuals(M9)
+qqnorm(M9_residuals)
+qqline(M9_residuals)
+```
+
+__<Q-Q (Quantile-Quantile) plot is a graphical tool that helps to estimate the data at hand is in line with a certain theoretical distribution, the normal distribution typically. Quantile is a point in data, below which a certain share of the data falls (James, 2017).The logic behind the plot is to show the distribution of residuals of M8 AND M9. 
+
+The quantiles of residuals in M8 model are plotted against the normal distribution quantiles, the scatter plot roughly goes along the 45 degree line, therefore we can say that our residuals are fairly distributed but large dispersion is observed in the lower quantile compared to M9 model and a low dispersion in upper quantile. 
+
+For M9 we can conclude that our residuals are fairly distributed because the scatter plot roughly goes along the 45 degree line. However,we can see some deviations mostly in the upper quantiles and few in lower quantiles.>__
+
+
+
+d) Generate the Scale-Location-plots for both models. Explain the logic behind the plot and intrepret the results.
+```{r}
+plot(M8)
+plot(M9)
+```
+
+__<The logic behind the plot is to identify any errors in the residuals like heteroscedasticity, wrong functional form, autcorrelation. All these can be visualized by looking at the residuals plots (Hill et al., 2018).  
+
+For M8, the residuals do not always spread evenly across the horizontal line, and some of the empty spaces suggest that the residuals distribute dynamically and show a left-handed bias. This violates the assumption of homoscedasticity and supports the presence of heteroscedasticity.
+
+For M9, there is no constant even spread of the residuals across the horizontal line and a randomized spread of points is observed. Although the spread do not show any side bias trend, we can assume the presence of heteroscedasticity because the assumption of homoscedasticity was violated by the uneven spread of the residuals. >__
+ 
+
+# References
+
+<!-- Wooldridge, Jeffrey M. (2013), Introductory Econometrics – A modern Approach, South Western Cengage Learning
+
+Montgomery, D. C., Peck, E. A., &amp; Vining, G. G. (2013). Introduction to linear regression analysis, Wiley. 
+
+Linton, Oliver (2017), Probability, Statistics and Econometrics; Elsevier Science & Technology. URL: https://ebookcentral.proquest.com/lib/hrw/detail.action?docID=4817893
+
+James, G. (2017). An introduction to statistical learning: With applications in R. Springer. 
+
+Hill, R.C., Griffiths, W.E. and Lim, G.C. (2012), Principles of Econometrics, Wiley. 
+
+Kutner, M. H. (2005). Applied linear statistical moderls. McGraw Hill. 
+
+Greene, W. H. (2012). Econometric analysis. Pearson. 
+
+Soetewey, A. (2021). Multiple linear regression made simple. Stats and R. https://statsandr.com/blog/multiple-linear-regression-made-simple/#coefficient-of-determination-r2 
+
+Chatterjee, S., &amp; Hadi, A. S. (2006). Regression analysis by example. Wiley-Interscience. 
+
+Allen, Michael. (1997). The problem of multicollinearity (pp 176-180). Springer US. 
+https://link.springer.com/chapter/10.1007/978-0-585-25657-3_37#citeas -->
+
+
+<!-- EPILOGUE: Do not edit anything below this line! -->
+
+# Declaration of Authenticity
+I, `r params$student`, hereby declare that the work presented herein is my own work completed without the use of any aids other than those listed. Any material from other sources or works done by others has been given due acknowledgement and listed in the reference section. Sentences or parts of sentences quoted literally are marked as quotations. The work presented herein has not been published or submitted elsewhere for assessment in the same or a similar form. I will retain a copy of this assignment until after the Board of Examiners has published the results, which I will make available on request.
+
+This document was created by machine and is therefore valid without signature.
+
+`r save(file=paste0(params$matriculation,"_QRM1_DevReport_",params$student,".RData"),MyRESULTS)`
