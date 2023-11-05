@@ -1,0 +1,552 @@
+---
+title: ''
+author: ''
+output:
+  pdf_document:
+    number_sections: no
+    toc: no
+  html_document:
+    df_print: paged
+  word_document:
+    toc: no
+params:
+  title: Impact Evaluation Report
+  student: Mulisa Kevine Umwiza 
+  matriculation: 32564
+  date: "`r Sys.Date()`"
+geometry: left = 2.5cm, right = 2cm, top = 2cm, bottom = 2cm
+fontsize: 11pt
+header-includes:
+- \usepackage{float}
+- \usepackage{sectsty}
+- \usepackage{paralist}
+- \usepackage{setspace}\spacing{1.5}
+- \usepackage{fancyhdr}
+- \usepackage{lastpage}
+- \usepackage{dcolumn}
+- \usepackage{natbib}\bibliographystyle{agsm}
+- \usepackage[nottoc, numbib]{tocbibind}
+---
+
+```{r preliminaries, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(tinytex.verbose = TRUE)
+ScieboPath <- function(NameofDataset) paste0("https://hochschule-rhein-waal.sciebo.de/s/nMlsNE8yiX8vY4x/download?path=%2F&files=",NameofDataset)
+MyRESULTS <- list()
+load(url(ScieboPath("EQUIP_Tanzania.RData")))
+set.seed(params$matriculation)
+MyPupIDs <- sample(EQUIP$n_pup_id, size=0.45*nrow(EQUIP), replace=F) # Take a 45% sub-sample
+EQUIP_BLML <- subset(EQUIP, n_pup_id %in% MyPupIDs)
+library(dplyr)
+EQUIP_BL <- subset(EQUIP, n_pup_id %in% MyPupIDs) %>% filter(year==0)
+EQUIP_ML <- subset(EQUIP, n_pup_id %in% MyPupIDs) %>% filter(year==1)
+```
+
+\allsectionsfont{\centering}
+\subsectionfont{\raggedright}
+\subsubsectionfont{\raggedright}
+
+\pagenumbering{gobble}
+
+\begin{centering}
+
+\vspace{1cm}
+
+\Large
+{\bf HOCHSCHULE RHEIN-WAAL}
+
+\Large
+{\bf RHINE-WAAL UNIVERSITY OF APPLIED SCIENCES}
+
+\Large
+{\bf FACULTY OF SOCIETY AND ECONOMICS}
+
+\vspace{5cm}
+
+\Large
+
+\doublespacing
+{\bf IMPACT EVALUATION REPORT}
+
+\vspace{1 cm}
+
+\doublespacing
+{\bf M-SD 2 7105 Quantitative Research Methods}
+
+\vspace{5 cm}
+
+\singlespacing
+By
+
+\vspace{0.5 cm}
+
+\Large
+
+{\bf `r params$student`\\ `r params$matriculation`}
+
+\vspace{1 cm}
+
+\normalsize
+Date:
+`r Sys.Date()`
+
+\end{centering}
+\pagebreak
+
+```{r cover-page, eval=knitr::is_html_output(), echo=FALSE, results='asis'}
+cat("<p align=center style=\"text-align:center\"><b><span lang=EN-US style=\"line-height:150%;color:black\">HOCHSCHULE RHEIN-WAAL<br>RHINE-WAAL UNIVERSITY OF APPLIED SCIENCES<br>FACULTY OF SOCIETY AND ECONOMICS<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>IMPACT EVALUATION REPORT<br>")
+cat("<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>M-SD_1 7105: Quantitative Research Methods<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>By<br>")
+cat(paste0(params$student,"<br>",params$matriculation))
+cat("<br>&nbsp;<br>&nbsp;<br>&nbsp;<br>Date:<br>")
+cat(format(Sys.Date(),"%d.%m.%Y"))
+cat("</span></b></p><hr><p><br></p>")
+```
+
+<!--
+
+INSTRUCTIONS:
+=============
+
+Do not edit anything ABOVE this comment, besides: 
+  - your NAME (in line no. 14) 
+  - and your MATRICULATION No. (in line no. 15) !!!
+
+When you manually execute this Rmd-File until this comment, you´ll find the following data-objects in the global environment:
+
+ - MyRESULTS: a (currently empty) list where you should assign the required reuslts to.
+ - params: a list including your personal and report information (name, matr. no., etc.) - not of interest here.
+  
+Below these lines you find the problem sets with questions, further instructions and (mostly) empty code-chunks.
+Please leave the questions/instruction unaltered and start filling in the code chunks below in response to the questions / instructions. 
+Continue by writing answers to the questions and your interpretations of the results below each code chunk.
+Save all required results in the MyRESULTS-list, e.g. by entering:
+
+  MyRESULTS$P1a <- "the result of problem 1a)"
+  MyRESULTS$M5 <- "the regression results of model no. 5"
+  
+Thus, add the "P" for Problem, "1" for problem no. 1, and "a" for sub-problem a) and assign "<-" the resulting lists(test outputs etc.), scalars, vectors, or dataframes. 
+Add "M" before the model no. to save the regression results from the respective model. 
+  
+
+SUBMISSION:
+===========
+In order to pass, it is mandatory to submit the resulting .Rmd and(!) .RData filesby the deadline via Moodle!
+However, you should have checked before that everything works correctly. 
+For the sake of documentation, you should 'knit' your .Rmd - file into multiple formats, e.g. PDF (if LaTex works on your computer), HTML (should work), Word-Doc (if you like) and submit these files additionally on Moodle.
+The last code-chunk saves your MyRESULTS-list in the "MyResults_[matr.no].RData"-file that needs to be submitted as well.
+
+We wish you every success!
+
+-->
+
+
+# Preliminaries and Description
+Your task is to povide a full impact evaluation report of the EQUIP-Tanzania program as described below.
+
+## The EQUIP Tanzania Program
+The EQUIP-Tanzania program, funded by DFID and implemented in cooperation with the Government of Tanzania, aims to improve the quality of education, especially for girls, in seven relatively educationally disadvantaged regions of Tanzania, with the eventual goal of replication to the whole of Tanzania.
+The program covered one quarter of the primary education system, with 3,680 schools, approximately 49,000 teachers. It supported more than 2 million girls and boys across 48 districts to have an equal opportunity to access and benefit from quality education.
+[Further details of the study can be found here.](https://microdata.worldbank.org/index.php/catalog/2838/studydescription)
+
+## Description of the Dataset
+This evaluation project measures the impact of educational quality improvement programme in Tanzania on pupil learning.
+– The baseline survey was carried out in 2014
+– The midline survey was carried out in 2016
+– The total number of students surveyed are 2,971.
+– The total number of schools included in survey are 200 (100 treatment and 100 control).
+– 25 districts covered in the study (17 treatment and 8 control)
+
+For this assignment, you will be using a subset of only 23 variables and approx 45% of all observerd pupils. There are 3 datasets in your memory:
+- `EQUIP_BL`: The baseline survey
+- `EQUIP_ML`: the midline survey
+- `EQUIP_BLML`: the combined baseline- and midline-survey
+The outcome variable of interest is the reading comprehension of the students, variable `n_p_rctotal`.
+
+
+Description of the Dataset:
+
+|Variable | Description |
+|----|----|
+|treatment | treatment/ control variable |
+|strata | sampling strata |
+|weight_school | school level weights |
+|weight_pupil | pupil level weights |
+|p_gender | pupil gender |
+|p_age | pupil age |
+|p_ml_readlib | Does pupil have time to read books in school everyday? |
+|sc_ashhsize | Size of household |
+|sc_asvehicles | Number of vehicles household owns |
+|sc_ml_schlwayhrs | Time it takes pupil to get to school everyday |
+|sc_ml_puphlpnum | Number of people who help pupil with hw at home |
+|sc_ml_pupbks | Does pupil bring home reading books besides textbooks |
+|sc_ml_pupread | How often does pupil read out loud to someone at home |
+|sc_ml_workhhfreq | how often does pupil work for HH? |
+|sc_ml_workoutside | Does pupil do paid or unpaid work outside HH? |
+|n_p_sspeed | Correct syllables read per minute |
+|n_p_fspeed | Correct familiar words read per minute |
+|n_p_pspeed | Correct words from passage read per minute |
+|n_p_rctotal | Total number of correct answers for reading comprehension |
+|n_p_lctotal | Total number of correct answers for listening comprehension |
+|n_p_swrttotal | Total number of spelling writing answered correctly |
+|year | Midline = 0, Baseline= 1 |
+|n_pup_id | Pupil unique ID code |
+
+
+# 1. Test for Randomization
+Test whether pupils where randomly assigned to treatment and control group. Take the data for the baseline survey (year = 0) and use a t-test on the outcome variable `n_p_rctotal`. Please compare
+the outcome between pupils in the treated and control groups.
+Use the five to seven most relevant independent variables
+from the dataset.
+
+## a) t-Test
+Is the difference in outcome between pupils in treatment and control group significant? How does this differ between baseline and midline survey? Use t-test for this purpose. (Save all t-test results in MyRESULTS$P1a...). Explain your findings.
+
+```{r}
+treatment_group_bl <- subset(EQUIP_BL, treatment == 1)
+control_group_bl <- subset(EQUIP_BL, treatment == 0)
+
+Relevant_variables <- c("p_gender", "p_age",  "n_p_sspeed", "n_p_fspeed", "n_p_pspeed", "p_ml_readlib", "sc_ml_pupread ")
+
+treatment_group_bl_outcome <- treatment_group_bl$n_p_rctotal
+control_group_bl_outcome <- control_group_bl$n_p_rctotal
+
+P1a1 <- t.test(treatment_group_bl_outcome, control_group_bl_outcome, alternative = "two.sided", paired = FALSE, var.equal = FALSE)
+
+print(P1a1)
+```
+
+```{r}
+treatment_group_ml <- subset(EQUIP_ML, treatment == 1)
+control_group_ml <- subset(EQUIP_ML, treatment == 0)
+
+Relevant_variables <- c("p_gender", "p_age",  "n_p_sspeed", "n_p_fspeed", "n_p_pspeed", "p_ml_readlib", "sc_ml_pupread ")
+
+treatment_group_ml_outcome <- treatment_group_ml$n_p_rctotal
+control_group_ml_outcome <- control_group_ml$n_p_rctotal
+
+P1a2 <- t.test(treatment_group_ml_outcome, control_group_ml_outcome, alternative = "two.sided", paired = FALSE, var.equal = FALSE)
+
+
+print(P1a2)
+```
+```{r}
+MyRESULTS$P1a1 <- P1a1
+MyRESULTS$P1a2 <- P1a2
+```
+
+__<The baseline survey was conducted in 2014 and this survey was done at the beginning of the intervention in order to gather data on the initial state of the target population. This survey helped in demonstrating a starting point and providing information about the situation before the intervention. The mid-line survey was conducted in 2016 and this survey aimed to analyse the changes that occurred since the baseline survey and help to understand the impact of the intervention over time.>__
+
+__<A t-test was used because it analyses if the difference between the means of the two groups is statistically significant or not (Hill et al., 2012).>__ 
+
+__<1a1) At the baseline survey, the results shows that p-value `r P1a1$p.value` is highly insignificant at 50% significance level which is relatively higher than the common significance of 5%-10% indicating that any changes between the treatment and control group could be due to random chance. Hence we can say that there is no difference between pupils in the control and treatment groups in this survey. Furthermore, we can see that there is a slight difference in the means of the two groups. `r mean(treatment_group_bl_outcome)` being the treatment group's mean and `r mean(control_group_bl_outcome)` being the control group mean, it can be observed that the control's group mean is higher than that of the treatment group. This difference, however, is relatively small and the t-test shows that it is not significant.>__
+
+__<H0: There is no difference between the means of the treatment group and control group.>__ 
+__<H1: There is a difference between the means of the treatment group and control group.>__
+
+__<1a2) At the mid-line survey, based on our results, we can observe that the p-value is `r P1a2$p.value` which is highly significant. Therefore we can reject the null hypothesis and conclude that there is a statistically significant difference between the means of the treatment group and control group in this survey. Furthermore, this argument is supported by the mean difference shown in the results by `r mean(treatment_group_ml_outcome)` being the treatment group's mean and `r mean(control_group_ml_outcome)` being the control group mean. Hence we can conclude that in the mid-line survey, there was a significant difference between the pupils treatment group and the pupils in the control group with the treatment group showing lower mean reading outcomes compared to the control group.>__ 
+
+__<To conclude, a significant difference between pupils in the treatment group and those in the control group is only observed in the mid-line survey, suggesting that the intervention had a significant impact over time because this change was caused by the intervention and as observed in the baseline survey, there was no significant difference between pupils in the treatment group and those in the control group.>__  
+
+
+## b) Regression Analysis
+Which are the sociodemographic characters that differ amongst the initial composition of control and treatment group? For finding an answer, use a multiple linear regression model. Interpret your results with regards to randomization of participants. Save your estimated model in `MyRESULTS$M1b`.
+```{r}
+M1b <-lm(n_p_rctotal~p_gender+p_age+n_p_sspeed+n_p_fspeed+n_p_pspeed+p_ml_readlib+sc_ml_pupread, data=EQUIP_BL)
+summary(M1b)
+MyRESULTS$M1b <- M1b
+```
+
+
+__<The aim is to have purely randomized groups. This models aims to provide evidence if the groups were purely randomized or not by identifying the sociodemographic characters that differ amongst the initial composition of control and treatment group.>__ 
+
+__<The independent variables in the model which are social demographic characters are only p_age and p_gender. Based on our results, the pupils gender and the number of correct words from passage read per minute are the only statistically significant variables. Pupil's gender is significant at 10% significance level and the number of correct words from passage read per minute is highly significant. Since pupil's gender is a social demographic character and is statistically significant, it is implied that there is there is a difference among the initial composition of control and treatment group and this difference is significant. Indicating the evidence of unsuccessful randomization.>__
+
+
+
+## 
+c) How do your findings of b) change throughout the course of the implementation of the program? Use a second regression model. Save your estimated model in `MyRESULTS$M1c`.
+```{r}
+M1c <-lm(n_p_rctotal~p_gender+p_age+n_p_sspeed+n_p_fspeed+n_p_pspeed+p_ml_readlib+sc_ml_pupread, data=EQUIP_ML)
+summary(M1c)
+MyRESULTS$M1c <- M1c
+```
+
+
+__<Throughout the course of the implementation of the program, the variables that were not significant before became highly significant. Those are the number of correct syllables read per minute, the number of correct familiar words read per minute, and the number of correct words from passage read per minute. They are all highly significant indicating that the intervention had a highly significant impact on them. They are not,however, social demographic characters.The pupil's gender is still significant at 10% significance level which implies that the presence of unsuccessful randomization is still evident.>__  
+
+
+
+2.) Randomized Control Trial Results
+Independent of previous results, suppose that program participation perfectly randomized.
+a) Run a simple linear regression model to estimate the treatment effect. (Save your results in `MyRESULTS$M2a`.) Briefly intepret the effect in words.
+```{r}
+M2a <- lm(n_p_rctotal~treatment, data=EQUIP_ML)
+summary(M2a)
+MyRESULTS$M2a <- M2a 
+```
+
+
+__<The treatment effect refers to the impact an intervention has on the outcome variable (Khandker et al., 2010). In this context, our intervention aims to improve the quality of education, especially for girls, and our outcome variable is the reading comprehension of the students. The p-value of the treatment effect is 0.000907 which is highly significant (<5% significance level). It can be observed however, that the treatment effect's coefficient is negative. This suggests that the intervention had a significant negative impact/effect on the reading comprehension of the students. Hence, it can be concluded that the intervention had a negative treatment effect.>__
+
+
+b) Find meaningful covariates that might have an effect on the outcome variable as well and run a multiple linear regression model. Explain your results. Interpret the treatment effect and it´s significance in comparison to model a). How has the overall error term variance and model fit changed? 
+```{r warning=FALSE}
+library(stargazer)
+M2b <- lm(n_p_rctotal ~ treatment+p_gender+p_age+n_p_sspeed+n_p_fspeed+n_p_pspeed+p_ml_readlib+sc_ml_pupread, data=EQUIP_ML)
+summary(M2b)
+stargazer(M2a,M2b, type = "text")
+MyRESULTS$M2b <- M2b
+```
+
+
+__<Only statistically significant variables can have an have an effect on the outcome variable (Khandker et al., 2010). In this context, only 3 variables are statistically significant. Those are the pupil's gender, the number of correct syllables read per minute, the number of correct familiar words read per minute, the number of correct words from passage read per minute, and how often the pupil reads out loud to someone at home. The number of correct syllables read per minute, the number of correct familiar words read per minute, and the number of correct words from passage read per minute are highly significant where as the pupil's gender and how often the pupil reads out loud to someone at home are less significant at 10% significance level. Therefore, we can conclude that the number of correct syllables read per minute, number of correct familiar words read per minute, and the number of correct words from passage read per minute have a closer relationship with the reading comprehension of the students than the gender of the pupil and how often the pupil reads out loud to someone at home, and this relationship/effect is significant.>__
+
+__<The treatment effect refers to the impact an intervention has on the outcome variable. In this context, our intervention aims to improve the quality of education, especially for girls, and our outcome variable is the reading comprehension of the students as mentioned. The treatment effect of M2b is not statistically significant at any significance level while the treatment effect of M2a is highly significant.This indicates that in M2a, there is evidence that shows that the intervention had an real impact on the reading comprehension of the students while in M2b, there is no evidence that supports the hypothesis of the intervention having a meaningful effect on the reading comprehension of the students.>__
+
+__<The Residual Standard Error(RSE) measures the average deviation/variability of the observed data points from the predicted values(residuals) (Khandker et al., 2010). In this context, the RSE has reduced from 1.377 to 0.8851 and this means that the model's predictions are becoming more accurate because the difference between the observed data points and the predicted ones is reducing. This observation is further supported by the increase in value of R-squared.>__ 
+
+__<R-squared is used to find the model with the best fit.The better the model is in describing the variation in the dependent variable explained by the independent variable, the higher the value for R-squared (Hill et al., 2012).Comparing the R-squared values, we can conclude that M2b is the best fit because its R-squared value is the higher than that of M2a which means that the model explains the higher variation in the reading comprehension of the students using the independent variables.>__
+
+3.) Instrumental Variable Regression
+Independent of previous results, suppose that program participation was non-random and the treatment variable is endogenous. Run an instrumental variable regression to rectify for the problem of endogeneity. Again, use the five to seven most relevant independent variables from the dataset.
+a) Use `sc_asvehicles` as an instrument for treatment and run a two stage least squares regression (`MyRESULTS$P3a`). Interpret the results.
+```{r}
+library(AER)
+M3a <- ivreg(n_p_rctotal ~ treatment+p_gender+p_age+n_p_sspeed+n_p_fspeed+n_p_pspeed+p_ml_readlib |p_gender+p_age+n_p_sspeed+n_p_fspeed+n_p_pspeed+p_ml_readlib+sc_asvehicles, 
+               data = EQUIP_ML) 
+summary(M3a)
+MyRESULTS$M3a <- M3a
+```
+
+__<Supposing that program participation was non-random and the treatment variable is endogenous. We run an instrumental variable regression to rectify for the problem of endogeneity. Endogeneity refers to a situation where one or more independent variables are correlated with the error term. The present correlation can possibly lead to biased estimations which would affect the analysis of casual relationships between dependent and the independent variables. Endogeneity is commonly caused by omitting relevant variables in the model, reversing causality relationships, and measurement errors. One of the ways that is used to address endogeneity is using instrumental variables.>__ 
+
+__<An instrumental variable (IV) is a variable that is correlated with the independent variable that could potentially be correlated with the error term but has no direct effect on the dependent variable. By using instrumental variables,endogeneity can be overcome. This is the approach that was used to answer this question and the IV that was used is sc_asvehicles.>__ 
+
+__<A two-stage-least squares regression (2LS) is a technique used to address endogeneity in econometric models.The first stage involves using the IV to evaluate the potentially endogenous independent variables. The second stage involves using them in a following regression to get unbiased estimates of the relationship between the endogenous independent variable and the outcome variable. the endogenous variable in this context is treatment.>__
+
+__<Using the number of vehicles household owns - sc_asvehicles as an instrument for treatment does not yield statistical significance on the outcome variable - the reading comprehension of the students. It has a negative impact on the treatment effect because the coefficient of treatment variable is negative holding the other variables in the model constant, this effect however is not statistically significant at any level.>__ 
+
+__<The only variables that are statistically significant are the number of correct syllables read per minute, the number of correct familiar words read per minute, the number of correct words from passage read per minute. Hence they are the only ones that have an effect on the reading comprehension of the students. R-squared is 0.5903, therefore the model explains 59% of the variance in the outcome variable.>__ 
+
+__<The Wald test is a test that assesses the joint significance of all coefficients in the model. Its p-value is highly statistically significant which indicates that at least one of the variables has a significant relationship with the outcome variable which is confirmed by the statistically significant variables observed.>__  
+
+b) Run the same analysis as in part (a) but this time use household size (`sc_ashhsize`) as an instrument for treatment in the education quality improvement program in Tanzania and compare the results with the help of a stargazer table. Briefly explain the main findings.
+```{r warning=FALSE}
+library(AER)
+library(stargazer)
+M3b <- ivreg(n_p_rctotal ~ treatment+p_gender+p_age+n_p_sspeed+n_p_fspeed+n_p_pspeed+p_ml_readlib |p_gender+p_age+n_p_sspeed+n_p_fspeed+n_p_pspeed+p_ml_readlib+sc_ashhsize, 
+               data = EQUIP_ML) 
+
+MyRESULTS$M3b <- M3b
+stargazer(MyRESULTS$M3a,MyRESULTS$M3b, type = "text")
+```
+
+
+__<Using the household size of the pupils `sc_ashhsize` as an instrument for treatment in the education quality improvement program in Tanzania does not yield statistical significance on the outcome variable - the reading comprehension of the students. It has a negative impact on the treatment effect because the coefficient of the treatment variable is negative holding the other variables in the model constant, this effect however is not statistically significant at any level.>__
+
+__<R-squared for M3a is higher which means the model explains more of the variance in the reading comprehension of the students than M3b.>__ 
+
+__<Furthermore, it can be observed that the statistical significance of the number of correct syllables read per minute changed from being highly statistically significant to being statistically insignificant when the household size of the pupils was used as an Instrumental Variable. Hence the number of correct syllables read per minute has a more significant effect on the reading comprehension of the students in M3a than in M3b.>__ 
+
+__<Therefore, it can be concluded that using the number of vehicles the household owns and the household size of the pupils as an instrument for treatment in the education quality improvement program in Tanzania does have a statistically significant effect on the reading comprehension of the students. This might be due to the weak correlation between the endogenous variable and the instruments or any other variable/factors that significantly affect the reading comprehension of the students.>__
+
+c) Explain the possible test strategies for overidentification and endogeneity, incl. Null-Hypothesis and distribution of the test statistic. Interpret the results of these tests from a) and b) to conclude which of the instruments (sc_asvehicles) or (sc_ashhsize) is (more) appropriate.
+
+
+```{r}
+summary(M3a, diagnostics = TRUE)
+summary(M3b, diagnostics = TRUE)
+```
+
+__<The following are possible test strategies for overidentification and endogeneity.>__ 
+
+__<Weak instruments: it does F-test on the first stage regression, Null hypothesis is that instruments are weak. Instrumental variables are weak when they have a low correlation with the endogenous explanatory variable.>__
+
+__<In this context: the number of vehicles owned by a household is the only highly statistically significant instrument which means that we can reject the null hypothesis and conclude that sc_asvehicles is the only appropriate instrument in our context.The household size is statistically significant at 10% significance level, therefore we fail to reject the null hypothesis. Thus, sc_ashhsize is a weak instrument and it may not be effective in in addressing endogeneity compared to the first instrument sc_asvehicles.>__ 
+
+
+__<Wu-Hausman Test: is a test on endogeneity. If all the independent variables are exogenous, then both the Ordinary Least Square and 2SLS estimators are consistent, and the OLS estimator is more efficient. But if one or more independent variables are endogenous, then the OLS estimator is inconsistent. The Null is that OLS and 2SLS are equally consistent.>__
+
+__<In this context: for both regressions we can observe p-value of 0.706 and 0.3886 respectively and test statistics of 0.143 and 0.744. Both p-values are above 5% significance level, suggesting weak evidence to reject the null hypothesis. Therefore, we fail to reject the null hypothesis and conclude that  there is no significant difference between the OLS and 2SLS (they are both equally consistent).Hence there is no endogeneity.>__
+
+ 
+__<Sargan Test: It tests over-identification restriction. So, it tests that all exogeneous instruments are in fact exogenous, and uncorrelated with the model residuals. The Null is that you have valid instruments and if it is significant, it means that you do not have valid instruments.>__
+
+__<In this context; this test can only be applied when there are more instruments than independent variables. We only have two instruments which are sc_asvehicles and sc_ashhsize, therefore it is not applicable to this context.>__ 
+
+__<In conclusion, sc_asvehicles is a more appropriate instrument to address endogeneity compared to sc_ashhsize. This is confirmed by the weak instruments test which shows that sc_asvehicles is statistically significant compared to sc_ashhsize. Furthermore, the Wu-Hausman test further proves the effectiveness of using sc_asvehicles in the first regression model because no evidence of endogeneity is found in either model. Therefore, sc_asvehicles is the preferred/appropriate instrument to address endogeneity in this analysis.>__
+
+
+4.) Propensity Score Matching
+a) Estimate a Propensity Score Model
+With the treatment variable on the left-hand side and meaningful covariates on the right hand side, estimate a probit regression model. Briefly, explain its main results.
+```{r warning= FALSE}
+library(stargazer)
+M4a <- glm(treatment ~ p_gender+p_age+n_p_sspeed+n_p_fspeed+n_p_pspeed+p_ml_readlib+sc_ml_pupread, family=binomial(link="probit"), data=EQUIP_ML)
+stargazer(M4a, type = "text")
+MyRESULTS$M4a <- M4a
+```
+
+__<Propensity score matching is a statistical method used in order to decrease the bias that can be found in treatment and control groups and balance the comparison between the two groups (Khandker et al., 2010). Even in the absence of random assignment to treatment groups, it helps in addressing selection bias which makes it easier to analyse causal relationships with more accuracy. To guarantee the validity of the findings, it is crucial to use acceptable procedures and carefully analyse the findings.>__
+
+__<1,670 observations were used to estimate the model and log-likelihood is -1,131.866. The log-likelihood measures a model's goodness of fit; the greater the number, the better fitted the model is; a negative value has no bearing on the validity.>__
+
+__<The coefficients reflect the size and direction of each independent variable's influence on the probability of receiving the treatment. Positive coefficients, for instance, imply that an increase in the independent variable's value is associated with a higher likelihood of receiving the treatment, whereas negative coefficients imply the inverse. The size of the effect is indicated by the magnitude of the coefficients.>__
+
+__<The only independent variables that are statistically significant are the student's gender (p_gender), age (p_age), and how frequently they read aloud to someone at home (sc_ml_pupread). Sc_ml_pupread has the highest level of significance, followed by p_age and p_gender. They all have positive coefficients, indicating that the likelihood of receiving the treatment increases as the independent variable's value rises. The size of the coefficients shows the extent of the effect.>__ 
+
+__<In summary, the probit regression model estimates the propensity score for the treatment variable based on meaningful independent variables. The coefficients and p-values provide insights into the relationships between the independent variables and the likelihood of receiving the treatment.>__
+
+
+b) Predict propensity scores and discuss these using summary statistics. Save the vector of propensity scores in `MyRESULTS$P4b`.
+```{r}
+P4_predict <- predict(M4a, type="response")
+
+P4b <- data.frame(EQUIP_ML$treatment, P4_predict)
+
+stargazer(P4b, type = "text")
+
+MyRESULTS$P4b <- P4b
+```
+```{r}
+head(P4b[(P4b$EQUIP_ML.treatment==0),],10)##those that did not participate
+head(P4b[(P4b$EQUIP_ML.treatment==1),],10)##those that participate
+```
+
+__<Based on the results, the mean propensity score is 0.493 and this means that on average the 1,670 pupils in the data set had a  49.3% probability of being included in the treatment group. The standard deviation has a small value of 0.086 suggesting that the propensity scores are closer to the mean and do not deviate further from the mean a lot. The minimum propensity score is 0.143 (14.3%) and this represents the lowest estimated probability of an individual in the data set receiving treatment. The maximum propensity score is 0.707 (70.7%) and this represents the highest estimated probability of an individual in the data set receiving treatment.>__ 
+
+
+c) Define the area of common support (comsup) and interpret the values in light of your results. Save the comsup-interval as `MyRESULTS$P4c`.
+```{r}
+comsup_area <- c(min(P4b$P4_predict[P4b$EQUIP_ML.treatment==1]), max(P4b$P4_predict[P4b$EQUIP_ML.treatment==0]))
+
+comsup_area
+
+MyRESULTS$P4c <- comsup_area
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+ 
+labs <- paste("Group:", c("Treatment","Control"))
+P4b %>%
+  mutate(treatment = ifelse(EQUIP_ML.treatment == 1, labs[1], labs[2])) %>%
+  ggplot(aes(x = P4_predict)) +
+  geom_histogram(color = "white") +
+  facet_wrap(~treatment) +
+  xlab("Probability of being treated") +
+  theme_bw()
+```
+
+
+__<The area of common support refers to the range of propensity scores where there is an overlap between the treatment group and the control group. It represents the region in which individuals from both groups share similar or comparable propensity scores, allowing for meaningful comparisons between treated and untreated individuals.>__
+
+__<According to our results, the common support area is defined by the two values: 0.1769268 and 0.6771447. These values represent the lower and upper bounds of the area of common support. Individuals with propensity scores falling within this range are considered to have a sufficient level of similarity in their likelihood of receiving treatment, enabling valid comparisons between treated and untreated individuals. A wide common support area with substantial overlap indicates that the treatment and control groups are comparable, reducing bias and enhancing the reliability of treatment effect estimates.>__
+
+d) Match participants and non-participants
+Use nearest neighbor matching for treatment and control group participants and interpret the results. (Save all results as `MyRESULTS$P4d`)
+```{r}
+library(MatchIt)
+P4d <- matchit(treatment ~ p_gender+p_age+n_p_sspeed+n_p_fspeed+n_p_pspeed+p_ml_readlib+sc_ml_pupread, data=EQUIP_ML, method="nearest")
+
+summary(P4d)
+P4d_data <- match.data(P4d)
+
+MyRESULTS$P4d <- P4d_data
+```
+
+
+__<Nearest neighbor matching refers to a statistical tool used to address selection bias by creating comparable groups of individuals in the treatment and control groups. Each individual in the treatment group is matched with one or two individuals in the control group according to the closest scores (Gerter et al., 2016).>__ 
+
+__<Based on the results, all individuals in the treatment group were successfully matched. However, 24 individuals were not successfully matched in the control group. The Standard Pair supports this argument because its distribution shows that the matched pairs are near in terms of propensity score values indicating that the matching was successful.>__ 
+
+__<Furthermore, the Variance Ratio increased for all variables which implies that the variability in the independent variables in the treatment group is now higher compared to the control group. A higher variance ratio can also be an indication of unsuccessful matching which is accounted for by the 24 individuals who were not matched in the control group. Additionally, it can also mean that the matching process did not successfully achieve a balance between the treatment and control groups in terms of the independent variables distributions.>__ 
+
+
+
+e) Calculate and interpret the treatment effect.
+
+```{r}
+t.test(n_p_rctotal ~ treatment, data=EQUIP_ML)
+t.test(n_p_rctotal ~ treatment, data=P4d_data)
+```
+
+__<The first test uses data from the mid-line survey and the second test uses data from the matched propensity scores.>__ 
+__<H0: There is no difference between the means of the treatment group and control group.>__ 
+__<H1: There is a difference between the means of the treatment group and control group.>__
+
+__<In the first test, the p-value is 0.0009008 which is highly statistically significant <5%. Therefore we can reject the null hypothesis which implies that there is a difference between the means of the treatment group and control group. Hence the treatment has a statistical significant effect on the reading comprehension of the students in the mid-line survey.>__ 
+
+__<In the second test, the p-value is 0.002632 which is highly statistically significant <5%. This gives us strong evidence to reject the null hypothesis, indicating that there is a difference between the means of the treatment group and control group. Hence the treatment has a statistical significant effect on the reading comprehension of the students also in the data from the matched propensity scores.>__ 
+
+__<Therefore we can conclude that in both tests, a statistical significant effect of the treatment on the reading comprehension of the students was observed based on the significance of the respective p-values.>__ 
+
+
+5.) Another Quasi-Experimental Method
+Suppose your are unsatisfied with all results from above. Use any other quasi-experimental evaluation method to calculate the treatment effect. Explain your chosen method and the rationale behind your decision. Explain the chosen specifications of your model. Run all required calculations. Save the treatment effect as `MyRESULTS$P5`. How does it compare to the previous findings from above?  
+
+```{r}
+library(dplyr)
+EQUIP_BLML <- EQUIP_BLML %>% 
+  mutate(treatment1=ifelse(treatment == 1 & year == 1, 1, 0)) %>%
+  group_by(n_pup_id) %>%
+  mutate(treatment_ML = max(treatment1))
+```
+
+```{r}
+M5a <- lm(n_p_rctotal ~ year + treatment_ML + I(year*treatment_ML), data=EQUIP_BLML)
+summary(M5a)
+```
+
+```{r}
+M5b <- lm(n_p_rctotal ~ year + treatment_ML + I(year*treatment_ML) + factor(n_pup_id), data=EQUIP_BLML )
+summary(M5b)
+```
+```{r}
+P5 <- lm(n_p_rctotal ~ year + treatment + I(year*treatment) +p_gender+p_age+n_p_sspeed+n_p_fspeed+n_p_pspeed+p_ml_readlib+sc_ml_pupread , data=EQUIP_BLML)
+
+
+summary(P5) 
+
+MyRESULTS$P5 <- P5
+```
+
+__<The double difference is the other quasi-experimental evaluation method that was used to calculate the treatment effect. Double difference refers to the statistical method used to evaluate the impact of an intervention by contrasting how the outcome variable evolves over time in the two groups: a treatment group that received the intervention and a control group that did not (Khandker et al., 2010). The aim of this tool is to isolate the effect of the treatment and it assumes that over time the two groups followed similar trends meaning that the treatment and the control group would have followed the same trends without the implementation of the intervention. Biased estimates could result from the violation of this assumption. This method was chosen because of its aim of isolating the effect of the treatment and addressing any selection bias that may have occurred during the randomization of individuals that were grouped into the two groups (Gertler et al., 2016).>__  
+
+__<The first step creating the year dummy- treatment_ML and regressing the outcome variable to the year, treatment_ML, and the interaction of year and the year dummy- I(year*treatment_ML). According to the results in M5a, the treatment_ML is not statistically significant, the year is statistically significant at a 0.1 significance level, and the interaction of the year and the year dummy is statistically significant at a 0.05 significance level. Therefore it can be concluded that the treatment_ML does not have a significant effect on the reading comprehension of the students.>__ 
+
+__<The second step entailed including the fixed effects in the regression created in the first step. Fixed effects are techniques used to address unobservant differences among groups that remain constant over time by including dummy variables and they also help address potential biases. According to the results in M5b, treatment_ML is now statistically significant at a 0.05 significance level same as the year variable, and the I(year*treatment_ML) is statistically significant at a 0.1 significance level. Therefore it can be concluded that the treament_ML has a statistically significant effect on the reading comprehension of the students. Thus using fixed effects was effective in increasing the significance of the treatment_ML.>__  
+
+__<The last step entailed adding the independent variables that were used throughout the exercise on the left side of the regression. This resulted (P5) in the treatment_ML, I(year*treatment_ML), and year becoming statistically insignificant.>__ 
+
+__<In order to compare the current findings in P5 and the previous findings that resulted from calculating the treatment effect using the propensity scores data, we can observe that the treatment effect is only statistically significant in the previous findings, and in the current findings, it is not statistically significant. Hence, we can conclude that the EQUIP Tanzania intervention has a statistically significant effect on the reading comprehension of the students when propensity score matching and when the double difference method was used, a statistically insignificant effect of the intervention on the reading comprehension of the students was observed.>__ 
+
+__<In conclusion, the effect of the EQUIP Tanzania intervention on the EQUIP Tanzania intervention seems to be dependent on the statistical tool used. The intervention was found to be significant when the propensity score matching method was used and insignificant when the double difference method was used. Therefore, more caution should be taken when drawing conclusions and each tool should be comprehensively analyzed to avoid wrong interpretations.>__ 
+
+
+
+
+# References
+
+Hill, R.C., Griffiths, W.E. and Lim, G.C. (2012), Principles of Econometrics, Wiley.
+
+Khandker, S. R., Koolwal, G. B., & Samad, H. A. (2010). Handbook on impact evaluation: Quantitative methods and practices. Washington, D.C.: World Bank.    URL: http://documents.worldbank.org/curated/en/650951468335456749/pdf/520990PUB0EPI1101Official0Use0Only1.pdf
+
+Gertler, Paul J., Sebastian Martinez, Patrick Premand, Laura B. Rawlings, and
+Christel M. J. Vermeersch. 2016. Impact Evaluation in Practice, second edition. Washington, DC: Inter-American Development Bank and World Bank. doi:10.1596/978-1-4648-0779-4. License: Creative Commons Attribution CC BY 3.0 IGO
+
+Welch, B. L. (1938). The Significance of the Difference Between Two Means when the Population Variances are Unequal. Biometrika, 29(3/4), 350. https://doi.org/10.2307/2332010
+
+Quiroga, B. F. (2018). Addressing Endogeneity Without Strong Instruments: A Practical Guide to Heteroskedasticity-Based Instrumental Variables. SSRN Electronic Journal. https://doi.org/10.2139/ssrn.3293789
+
+
+
+<!-- EPILOGUE: Do not edit anything below this line! -->
+
+# Declaration of Authenticity
+I, `r params$student`, hereby declare that the work presented herein is my own work completed without the use of any aids other than those listed. Any material from other sources or works done by others has been given due acknowledgement and listed in the reference section. Sentences or parts of sentences quoted literally are marked as quotations. The work presented herein has not been published or submitted elsewhere for assessment in the same or a similar form. I will retain a copy of this assignment until after the Board of Examiners has published the results, which I will make available on request.
+
+This document was created by machine and is therefore valid without signature.
+
+`r save(file=paste0(params$matriculation,"_QRM2_IEReport_",params$student,".RData"),MyRESULTS)`
